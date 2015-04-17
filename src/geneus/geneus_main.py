@@ -52,6 +52,10 @@ def usage(progname):
 rp = rospkg.RosPack()
 rlist = rp.list()
 
+from catkin_pkg import package
+def get_depends(pkg):
+    return [str(p) for p in package.parse_package(os.path.join(rp.get_path(pkg), 'package.xml')).exec_depends]
+
 def package_depends(pkg):
     depends = []
     for d in package_depends_impl(pkg):
@@ -60,7 +64,8 @@ def package_depends(pkg):
             if os.path.exists(os.path.join(p_path, "msg")) or os.path.exists(os.path.join(p_path, "srv")) :
                 depends.append(d)
         except rospkg.ResourceNotFound:
-            print('[WARNING] path to %s is not found'%(pkg))
+            #print('[WARNING] path to %s is not found'%(pkg)) # this may system tools
+            pass
         except Exception as e:
             print('[WARNING] path to %s is not found'%(pkg))
             print(e)
@@ -71,7 +76,7 @@ def package_depends_impl(pkg, depends=[]):
         print('[WARNING] %s is not found in ROS_PACKAGE_PATH'%(pkg))
         return depends
 
-    tmp_depends = [x for x in rp.get_depends(pkg, False) if x not in depends]
+    tmp_depends = [x for x in get_depends(pkg) if x not in depends]
     depends.extend(tmp_depends)
     for p in tmp_depends:
         package_depends_impl(p, depends)
